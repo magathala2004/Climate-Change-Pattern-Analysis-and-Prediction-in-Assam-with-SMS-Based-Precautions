@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Assam Climate Forecast</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e3a8a, #0ea5e9);
+      --card-bg: rgba(255, 255, 255, 0.12);
+      --card-border: rgba(255, 255, 255, 0.25);
+      --text-main: #f9fafb;
+      --text-muted: #e5e7eb;
+      --accent: #38bdf8;
+      --danger: #f97373;
+      --warning: #fbbf24;
+      --ok: #4ade80;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1100px;
+      background: rgba(15, 23, 42, 0.86);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+      padding: 18px 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #facc15, #ea580c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 15px rgba(250, 204, 21, 0.8);
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .brand-text p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .district-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .district-picker label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .select-input {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      min-width: 180px;
+    }
+
+    .highlight-select {
+      box-shadow: 0 0 0 2px #facc15;
+    }
+
+    .btn-primary {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: #0b1120;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 8px 18px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    main.layout-column {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      padding: 14px 14px 16px;
+      backdrop-filter: blur(16px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+
+    .card-header span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 7-day outlook */
+    .current-summary {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+
+    .current-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #f97316, #ea580c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      box-shadow: 0 0 15px rgba(248, 250, 252, 0.4);
+      flex-shrink: 0;
+    }
+
+    .current-main {
+      flex: 1;
+    }
+
+    .current-main h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .current-main p {
+      margin: 3px 0 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .current-extra {
+      font-size: 12px;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pill-rain {
+      background: rgba(56, 189, 248, 0.18);
+      color: #e0f2fe;
+    }
+
+    .pill-temp {
+      background: rgba(248, 250, 252, 0.08);
+      color: #fef9c3;
+    }
+
+    .days-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 2px;
+      scrollbar-width: thin;
+    }
+
+    .days-strip::-webkit-scrollbar { height: 6px; }
+    .days-strip::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.8);
+      border-radius: 999px;
+    }
+
+    .day-card {
+      min-width: 105px;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 12px;
+      padding: 8px 9px 9px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
+    }
+
+    .day-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.7);
+      border-color: var(--accent);
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .day-name { font-weight: 600; }
+    .day-icon { font-size: 18px; }
+    .day-rain { font-size: 11px; }
+
+    .rain-high { color: var(--danger); }
+    .rain-med  { color: var(--warning); }
+    .rain-low  { color: var(--ok); }
+
+    .mini-temp { font-size: 11px; color: var(--text-muted); }
+    .mini-hum  { font-size: 10px; color: var(--text-muted); }
+    .muted     { color: var(--text-muted); font-size: 12px; }
+
+    /* Map + slider + chat */
+    .map-chat-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .map-chat-body {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .slider-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      height: 230px;
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateX(30px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 14px;
+    }
+
+    .slide-caption {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .slider-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+    }
+
+    .slider-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .slider-dot.active {
+      background: #38bdf8;
+      border-color: #38bdf8;
+    }
+
+    .slider-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text-main);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .slider-arrow.left { left: 10px; }
+    .slider-arrow.right{ right: 10px; }
+
+    .slider-caption-small {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .chat-panel h3 {
+      margin: 0 0 4px;
+      font-size: 14px;
+    }
+
+    .chat-panel p {
+      margin: 0 0 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .chat-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .chat-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 4px 9px;
+      font-size: 11px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .chat-btn:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    .chat-window {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 6px 8px;
+      height: 130px;
+      overflow-y: auto;
+      font-size: 11px;
+    }
+
+    .chat-bubble {
+      max-width: 90%;
+      margin: 3px 0;
+      padding: 5px 8px;
+      border-radius: 10px;
+      line-height: 1.3;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: #0ea5e9;
+      color: #0b1120;
+      margin-left: auto;
+    }
+
+    .chat-bubble.bot {
+      align-self: flex-start;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    /* Alerts card */
+    .alert-form label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      display: block;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      margin-top: 4px;
+    }
+
+    .alert-form .select-input { width: 100%; }
+
+    .threshold-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .threshold-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .tiny-caption {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    #regMessage {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .success { color: #4ade80; }
+    .error   { color: #f97373; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #bbf7d0;
+      font-size: 11px;
+    }
+
+    .loader {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(148, 163, 184, 0.4);
+      border-top-color: #38bdf8;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">☁️</div>
+        <div class="brand-text">
+          <h1>Assam Climate Predictor</h1>
+          <p>7-day rainfall · temperature · humidity forecast</p>
+        </div>
+      </div>
+
+      <div class="district-picker">
+        <label for="districtSelect">District forecast:</label>
+        <select id="districtSelect" class="select-input">
+          <option value="">-- Choose district --</option>
+          {% for d in districts %}
+          <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn-primary" onclick="loadForecast()">
+          <span>View forecast</span> <span>▶</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="layout-column">
+      <!-- 1) 7-DAY OUTLOOK -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>7-Day Outlook</h2>
+            <span id="forecastSubtitle" class="muted">Select a district to view forecast.</span>
+          </div>
+          <div id="alertStatus"></div>
+        </div>
+        <div id="forecastContent">
+          <p class="muted">No data loaded yet. Choose a district and click “View forecast”.</p>
+        </div>
+      </section>
+
+      <!-- 2) MAP + SLIDER + INTERACTIVE SESSION -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Assam Climate Story</h2>
+          <span>Explore the map, images & quick insights.</span>
+        </div>
+        <div class="map-chat-body">
+          <!-- Slider / Map -->
+          <div>
+            <div id="imageSlider" class="slider-container">
+              <!-- Slide 1: clickable Assam map -->
+              <div class="slide active" onclick="focusDistrictSelect()">
+                <img src="/static/images/slide1.jpg.jpg" alt="Assam District Map">
+                <div class="slide-caption">Click map to jump to district selector</div>
+              </div>
+              <!-- Slide 2: floods -->
+              <div class="slide">
+                <img src="/static/images/slide2.jpg.png" alt="Assam flood image">
+                <div class="slide-caption">Monsoon floods – importance of rainfall prediction</div>
+              </div>
+              <!-- Slide 3: tea gardens -->
+              <div class="slide">
+                <img src="/static/images/slide3.jpg.webp" alt="Tea gardens of Assam">
+                <div class="slide-caption">Tea gardens depend on balanced rain & humidity</div>
+              </div>
+              <!-- Slide 4: climate collage -->
+              <div class="slide">
+                <img src="/static/images/slide4.jpg.jpg" alt="Assam climate collage">
+                <div class="slide-caption">Changing climate patterns across Assam</div>
+              </div>
+              <!-- Slide 5: drought landscape -->
+              <div class="slide">
+                <img src="/static/images/slide5.jpg.jpg" alt="Drought landscape">
+                <div class="slide-caption">Low rainfall & heatwaves – extreme dry conditions</div>
+              </div>
+              <!-- Slide 6: flood impact on people -->
+              <div class="slide">
+                <img src="/static/images/slide6.jpg.jpg" alt="People walking through flood water">
+                <div class="slide-caption">Floods directly affect communities & livelihoods</div>
+              </div>
+              <!-- Slide 7: cracked soil farmer -->
+              <div class="slide">
+                <img src="/static/images/slide7.jpg.webp" alt="Farmer on cracked soil">
+                <div class="slide-caption">Farmers are vulnerable to rainfall variability</div>
+              </div>
+              <!-- Slide 8: extra climate visual -->
+              <div class="slide">
+                <img src="/static/images/slide8.jpg.avif" alt="Climate change visual">
+                <div class="slide-caption">Monitoring future climate helps planning</div>
+              </div>
+
+              <button class="slider-arrow left" onclick="prevSlide(event)">‹</button>
+              <button class="slider-arrow right" onclick="nextSlide(event)">›</button>
+
+              <div class="slider-dots" id="sliderDots">
+                <!-- dots filled by JS -->
+              </div>
+            </div>
+            <div class="slider-caption-small">
+              Images: Assam district map, floods, tea gardens, drought & climate change views.
+            </div>
+          </div>
+
+          <!-- Interactive chat panel -->
+          <div class="chat-panel">
+            <h3>Interactive Climate Insights</h3>
+            <p>Ask quick questions based on the loaded 7-day forecast.</p>
+
+            <div class="chat-buttons">
+              <button type="button" class="chat-btn" onclick="handleQuestion('rain')">
+                Will it rain heavily this week?
+              </button>
+              <button type="button" class="chat-btn" onclick="handleQuestion('heat')">
+                Will temperature cross my limit?
+              </button>
+              <button type="button" class="chat-btn" onclick="handleQuestion('humidity')">
+                How humid will it feel?
+              </button>
+              <button type="button" class="chat-btn" onclick="handleQuestion('summary')">
+                Give me a short summary.
+              </button>
+            </div>
+
+            <div id="chatWindow" class="chat-window">
+              <div class="chat-bubble bot">
+                Hi! Load a district forecast, then tap a question above to get an explanation.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3) REGISTRATION / ALERTS (moved below outlook + map) -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Register for Climate Alerts</h2>
+          <span>Get email when conditions cross your limits.</span>
+        </div>
+
+        <form class="alert-form" onsubmit="event.preventDefault(); registerAlert();">
+          <label for="emailInput">Email address</label>
+          <input type="email" id="emailInput" class="text-input" placeholder="you@example.com" required>
+
+          <label for="districtRegSelect">District to monitor</label>
+          <select id="districtRegSelect" class="select-input" required>
+            <option value="">-- Choose district --</option>
+            {% for d in districts %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+
+          <div class="threshold-row">
+            <div>
+              <label for="thresholdRain">Rain probability ≥ (%)</label>
+              <input type="number" id="thresholdRain" class="text-input" value="70" min="0" max="100" step="1">
+            </div>
+            <div>
+              <label for="thresholdTmax">Tmax ≥ (°C)</label>
+              <input type="number" id="thresholdTmax" class="text-input" value="35" step="0.5">
+            </div>
+            <div>
+              <label for="thresholdHum">Humidity avg ≥ (%)</label>
+              <input type="number" id="thresholdHum" class="text-input" value="80" min="0" max="100" step="1">
+            </div>
+          </div>
+
+          <p class="tiny-caption">
+            You will receive an email if any of the next 7 days cross these thresholds.
+          </p>
+
+          <button type="submit" class="btn-primary" style="margin-top: 8px;">
+            <span>Register for alerts</span> <span>🔔</span>
+          </button>
+
+          <div id="regMessage"></div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
